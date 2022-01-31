@@ -28,6 +28,6 @@ Simple expense tracking restful api app developed with NestJS.
 
 ## Modules and Features
 
-### Auth -> Sign In, Sign Up
+- Auth -> Sign In, Sign Up
 
-### Expense -> Add Expense, Delete Expense, Get Total Money (Search expense by category will be added.).
+- Expense -> Add Expense, Delete Expense, Get Total Money (Search expense by category will be added.).
