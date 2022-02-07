@@ -5,6 +5,7 @@ import { UsersRepository } from 'src/auth/users.repository';
 import { Repository, EntityRepository } from 'typeorm';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { DeleteExpenseDto } from './dto/delete-expense.dto';
+import { SearchExpenseDto } from './dto/search-expense.dto';
 import { ExpenseCategory } from './expense-category.enum';
 import { Expense } from './expense.entity';
 
@@ -39,15 +40,46 @@ export class ExpensesRepository extends Repository<Expense> {
     return await this.save(expense);
   }
 
-  async getExpenses(user: User): Promise<Expense[]> {
-    console.log(user.total);
-    const expenses = await this.find({ user });
+  async getExpenses(
+    user: User,
+    searchExpenseDto: SearchExpenseDto,
+  ): Promise<Expense[]> {
+    // console.log(`total: ${user.total}`);
+    // const expenses = await this.find({ user });
+    // return expenses;
+    const { description } = searchExpenseDto;
+    const query = this.createQueryBuilder('expense');
+    query.where({ user });
+    if (description) {
+      query.andWhere('expense.description ILIKE :description', {
+        description: `%${description}%`,
+      });
+    }
+
+    const expenses = await query.getMany();
     return expenses;
   }
 
-  async deleteExpenseById(deleteExpenseDto: DeleteExpenseDto): Promise<void> {
+  async deleteExpenseById(
+    user: User,
+    deleteExpenseDto: DeleteExpenseDto,
+  ): Promise<void> {
     const { id } = deleteExpenseDto;
+    const foundExpense = await this.findOne({ id });
+    const foundExpensePaid = foundExpense.paid;
+    const foundExpenseCategory = foundExpense.category;
+
+    if (foundExpense) {
+      user.total +=
+        foundExpenseCategory == ExpenseCategory.Income
+          ? -Number.parseFloat(foundExpensePaid)
+          : Number.parseFloat(foundExpensePaid);
+
+      await this.usersRepository.save(user);
+    }
+
     const affected = (await this.delete(id)).affected;
+
     if (affected === 0) {
       throw new NotFoundException(`There is no item for this id: ${id}`);
     }

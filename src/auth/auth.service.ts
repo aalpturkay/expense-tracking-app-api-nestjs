@@ -31,13 +31,13 @@ export class AuthService {
     const { username, password } = authCredentialDto;
     const user = await this.usersRepository.findOne({ username });
 
-    if (user && bcrypt.compare(password, user.password)) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       const payload: JwtPayload = { username };
       const accessToken: string = this.jwtService.sign(payload);
 
       return { accessToken };
+    } else {
+      throw new UnauthorizedException();
     }
-
-    throw new UnauthorizedException();
   }
 }

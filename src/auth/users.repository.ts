@@ -22,4 +22,10 @@ export class UsersRepository extends Repository<User> {
       }
     }
   }
+
+  async getBalance(user: User): Promise<number> {
+    const { id } = user;
+    const balance = (await this.findOne({ id })).total;
+    return balance;
+  }
 }
